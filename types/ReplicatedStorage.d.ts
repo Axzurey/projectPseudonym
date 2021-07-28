@@ -1,15 +1,23 @@
 interface ReplicatedStorage extends Instance {
+	guiAssets: Folder & {
+		node: Frame & {
+			UICorner: UICorner;
+		};
+		branch: Frame;
+	};
 	TS: Folder & {
 		module: ModuleScript;
 		agents: Folder & {
 			Asterisk: ModuleScript;
 		};
 		int: ModuleScript;
+		skillTree: ModuleScript;
 		game: Folder & {
 			framework: ModuleScript;
 		};
 		modifiers: ModuleScript;
-		skills: Folder & {
+		abilities: Folder & {
+			XOR: ModuleScript;
 			Dot: ModuleScript;
 		};
 	};
