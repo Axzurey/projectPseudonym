@@ -1,45 +1,26 @@
 import {Workspace, ReplicatedStorage, ServerScriptService, ServerStorage, RunService, Players} from '@rbxts/services'
-import {user} from './datastore'
-import { inventoryItem} from "./dataTypes"
-import {clientModule} from './dataModules'
 
-let databaseInventory : user = new user("main")
-let clientData : Map<String, clientModule> = new Map()
+import {entities, observer, linter} from 'server/runtime'
+import { console } from 'shared/quark'
 
-let getData = function (client : Player) {
-    let l : inventoryItem[] | any = databaseInventory.getAsync(client.UserId)
-    return l
-}
+observer.hook('get', ReplicatedStorage.FindFirstChild("remotes")?.FindFirstChild("get") as RemoteEvent)
 
-let playerAdded = function(client : Player) {
-    let data : any = databaseInventory.getAsync(client.UserId)
-    clientData.set(client.Name, new clientModule(client, getData))
-}
+let clientData : {[key : string] : any} = {}
 
-let playerLeaving = function(client : Player) {
-    print("leaving triggered")
-    let save : inventoryItem[] = [
-        {
-            name : "cookie slasher"
-        },
-        {
-            name : "man person",
-            ammo : 34,
-        }
-    ]
-    databaseInventory.setAsync(client.UserId, save)
-    print("my mans left")
-}
+observer.watch('get', (client : Player) => {
+    
+})
 
-game.BindToClose(() => {
-    for (let client of Players.GetPlayers()) {
-        coroutine.wrap(() => {
-            print("binding to close for client")
-            playerLeaving(client)
-        })()
+linter.lintEffects('inflict corrosion for 10 to baxza5b3')
+
+Players.PlayerAdded.Connect((client : Player) => {
+    clientData[client.Name] = {
+        inventory : {},
+        module : undefined,
+        hotbar : {}
     }
 })
-Players.PlayerAdded.Connect(playerAdded)
-if (!RunService.IsStudio()) {
-    Players.PlayerRemoving.Connect(playerLeaving)
-}
+
+Players.PlayerRemoving.Connect((client : Player) => {
+
+})

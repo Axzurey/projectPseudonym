@@ -1,4 +1,4 @@
-export class Hyphen {
+export class Asterisk {
     skills = {
         skill1 : {
             name : "Dot",
@@ -17,6 +17,6 @@ export class Hyphen {
         }
     }
     constructor() {
-
+        
     }
 }

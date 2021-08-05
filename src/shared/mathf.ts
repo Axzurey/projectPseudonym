@@ -1,3 +1,25 @@
+export function pointsFromEquidistanceSphere(count : number) : Vector3[] {
+    let goldenRatio = 1 + math.sqrt(5) / 4
+    let angleIncrement = math.pi * 2 * goldenRatio
+    let multiplier = 10
+
+    let points : Vector3[] = []
+    for (let i=1; i <= count; i++) {
+
+        let distance = i / count
+        let incline = math.acos(1 - 2 * distance)
+        let azimuth = angleIncrement * i
+
+        let x = math.sin(incline) * math.cos(azimuth) * multiplier
+        let y = math.sin(incline) * math.sin(azimuth) * multiplier
+        let z = math.cos(incline) * multiplier
+
+        let point = new Vector3(x, y, z)
+        points.push(point)
+    }
+    return points
+}
+
 export function pointsFromEquidistant2(center : Vector2, count : number, radius : number) : Vector2[] {
     let cpo = 360 / count
     let points = []
