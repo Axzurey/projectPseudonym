@@ -40,17 +40,40 @@ export const debuffs : {[key : string] : any} = {
     poison : true
 }
 
+export const buffs : {[key : string] : any} = {
+    regeneration : true
+}
+
 export class entity {
-    id : string = ""
+    id : string | number = ""
     maxHealth : number = 1
     health : number = 0
     buffs : [] = []
     debuffs : debuff[] = []
+    modifiers : string[] = []
     object : Model | undefined
     humanoid : Humanoid | undefined
     rootPart : BasePart | undefined
+    events : {[key : string] : RBXScriptConnection} = {}
     constructor() {
         
+    }
+    hasEffect(effect : string) : boolean {
+        this.buffs.forEach((buff) => {
+            for (const [index, value] of pairs(buffs)) {
+                if (value === buff && index === effect) {
+                    return true
+                }
+            }
+        })
+        this.debuffs.forEach((debuff) => {
+            for (const [index, value] of pairs(debuffs)) {
+                if (value === debuff && index === effect) {
+                    return true
+                }
+            }
+        })
+        return false
     }
     applyDebuff(debuff : validDebuff, level : number) {
         let d = new debuffs[debuff](this, level)

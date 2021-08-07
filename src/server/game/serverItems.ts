@@ -1,7 +1,7 @@
 import { ReplicatedFirst, ReplicatedStorage, RunService, UserInputService, Workspace } from '@rbxts/services'
 import {gamef} from 'shared/quark'
-import { entities, observer } from 'server/runtime'
-import { dropItem } from './gameFunctions'
+import { entities } from 'server/runtime'
+//import { dropItem } from 'server/gameFunctions'
 
 export type meleeConstructor = {
     damage : number
@@ -12,12 +12,16 @@ export type meleeConstructor = {
     }}[]
 }
 
+export const items : {[key : string] : baseMelee} = {
+    
+}
+
 export class baseMelee {
     client : Player
     name : string | undefined
     damage : number
     equipped : boolean
-    events : {[key : string] : RBXScriptConnection | observer.watcher} = {}
+    events : {[key : string] : RBXScriptConnection} = {}
     attackSpeed : number
     attackAnimation : AnimationTrack | undefined
     modifiers : {[key : string] : {
@@ -69,12 +73,7 @@ export class baseMelee {
             this.motor.Destroy()
         }
         for (let [index, value] of pairs(this.events)) {
-            if (value instanceof observer.watcher) {
-                value.disconnect()
-            }
-            else {
-                value.Disconnect()
-            }
+            value.Disconnect()
         }
     }
     loadEvents() {
@@ -82,9 +81,9 @@ export class baseMelee {
 
         })
         let vui = ReplicatedStorage.FindFirstChild("remotes")?.FindFirstChild("validUserInput") as RemoteEvent
-        this.events.userInput = observer.watch("validUserInput", (client : Player, direction : 1 | 0, key : Enum.UserInputType  | Enum.KeyCode) => {
-            if (this.client !== client) return
-        })
+        //this.events.userInput = observer.watch("validUserInput", (client : Player, direction : 1 | 0, key : Enum.UserInputType  | Enum.KeyCode) => {
+          //  if (this.client !== client) return
+        //})
     }
     loadMotors() {
         this.motor = new Instance("Motor6D")

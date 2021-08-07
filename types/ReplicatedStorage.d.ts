@@ -1,5 +1,15 @@
 interface ReplicatedStorage extends Instance {
-	itemModules: Folder & {
+	assets: Folder & {
+		greenBall: MeshPart;
+		wireframecube: MeshPart;
+	};
+	remotes: Folder & {
+		post: RemoteEvent;
+		validUserInput: RemoteEvent;
+		get: RemoteEvent;
+		chat: RemoteEvent;
+	};
+	itemModels: Folder & {
 		Raiden: Model & {
 			damping: MeshPart;
 			grip: MeshPart;
@@ -20,13 +30,6 @@ interface ReplicatedStorage extends Instance {
 			back: MeshPart;
 		};
 	};
-	assets: Folder & {
-		greenBall: MeshPart;
-		wireframecube: MeshPart;
-	};
-	remotes: Folder & {
-		validUserInput: RemoteEvent;
-	};
 	animations: Folder & {
 		Raiden: Folder & {
 			idle: Animation;
@@ -42,24 +45,24 @@ interface ReplicatedStorage extends Instance {
 	};
 	TS: Folder & {
 		quark: ModuleScript;
-		skillTree: ModuleScript;
-		shapesf: ModuleScript;
-		mathf: ModuleScript;
+		fremy: ModuleScript;
+		services: ModuleScript;
+		itemModules: Folder & {
+			Raiden: ModuleScript;
+		};
 		abilities: Folder & {
 			XOR: ModuleScript;
 			Dot: ModuleScript;
 		};
-		skills: ModuleScript;
-		glare: ModuleScript;
+		enums: ModuleScript;
+		shapesf: ModuleScript;
 		game: Folder & {
 			framework: ModuleScript;
+			rawItemData: ModuleScript;
+			items: ModuleScript;
 		};
-		agents: Folder & {
-			Asterisk: ModuleScript;
-			Phiora: ModuleScript;
-			Morgan: ModuleScript;
-		};
-		fremy: ModuleScript;
+		glare: ModuleScript;
+		skills: ModuleScript;
 	};
 	rbxts_include: Folder & {
 		RuntimeLib: ModuleScript;

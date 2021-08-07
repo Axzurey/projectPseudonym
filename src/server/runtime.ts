@@ -1,6 +1,39 @@
 import { Players, MessagingService, DataStoreService } from "@rbxts/services"
 import { entity, debuff, debuffs } from "server/entities"
 import { console } from "shared/quark"
+import { modifiers } from "./modifiers"
+
+export namespace channel {
+    let channels : {
+        name : string,
+        callback : (...args : unknown[]) => unknown[] | unknown | void
+        disconnect : () => void
+    }[] = []
+    export function requestAsync(name : string, ...args : unknown[]) {
+        return new Promise((resolve, reject) => {
+            channels.forEach((t) => {
+                if (name === t.name) {
+                    let n = t.callback(...args)
+                    resolve(n)
+                }
+            })
+        })
+    }
+    export function channel(name : string, callback : (...args : unknown[]) => unknown[] | unknown | void) {
+        let n = {
+            name : name,
+            callback : callback,
+            disconnect : () => {
+                let i = channels.indexOf(n)
+                if (i !== -1) {
+                    channels.remove(i)
+                }
+            }
+        }
+        channels.push(n)
+        return n
+    }
+}
 
 export namespace nString {
     export const upperCase : String[] = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S',
@@ -171,6 +204,41 @@ export namespace entities {
         })
         return n
     }
+    let entityModifiers : string[] = modifiers
+
+    export function entitiesOfModifierInRange(origin : Vector3, range : number, modifiers : string[]) : entity[] {
+        let e : entity[] = []
+        entities.forEach((value) => {
+            let cf = value.object?.GetPrimaryPartCFrame()
+            let position = cf?.Position as Vector3
+            if (position.sub(origin).Magnitude <= range) {
+                modifiers.forEach((mod) => {
+                    if (value.modifiers.indexOf(mod) !== -1) {
+                        e.push(value)
+                        return
+                    }
+                })
+            }
+        })
+        return e
+    }
+
+    export function entitiesWithAfflictionInRange(origin : Vector3, range : number, affliction : string[]) : entity[] {
+        let e : entity[] = []
+        entities.forEach((value) => {
+            let cf = value.object?.GetPrimaryPartCFrame()
+            let position = cf?.Position as Vector3
+            if (position.sub(origin).Magnitude <= range) {
+                affliction.forEach((afl) => {
+                    if (value.hasEffect(afl)) {
+                        e.push(value)
+                        return
+                    }
+                })
+            }
+        })
+        return e
+    }
 }
 
 export namespace linter {
@@ -178,7 +246,7 @@ export namespace linter {
     let _searches = ['first', 'last', 'all']
     let _modifiers = ['permanent', 'for%s+(%d+)']
     let _id = "to%s+([%d?%a?]+)"
-    let _level = "level%s+(%d+)"
+    let _level = "@%s+(%d+)"
     //example: inflict 
     export function lintEffects(parse : string) {
         let keyword : string = ""
@@ -223,42 +291,5 @@ export namespace linter {
             }
         }
         print(keyword, effect, search, modifier, id)
-    }
-}
-
-export namespace observer {
-    let connections : {[key : number] : watcher} = {}
-    let events = []
-    let currentId = 0
-    export class watcher {
-        id : number = currentId
-        event : string
-        callback : (...n : any) => void
-        constructor(event : string, callback : (...values : LuaTuple<[]>) => void) {
-            this.event = event
-            this.callback = callback
-        }
-        disconnect() {
-            delete connections[this.id]
-        }
-    }
-    export function hook(event : string, remote : RemoteEvent | RemoteFunction) {
-        if (remote.IsA("RemoteEvent")) {
-            remote.OnServerEvent.Connect((...args : unknown[]) => {
-                for (let [index, value] of pairs(connections)) {
-                    if (value.event === event) {
-                        coroutine.wrap(value.callback)(...args)
-                    }
-                }
-            })
-        } else {
-
-        }
-    }
-    export function watch(event : string, callback : (...values : any) => void) {
-        currentId += 1
-        let l = new watcher(event, callback)
-        connections[l.id] = l
-        return l
     }
 }
