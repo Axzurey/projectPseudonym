@@ -1,4 +1,4 @@
-export function sphere(count : number) : Vector3[] {
+export function sphere(count : number, offset : Vector3 | undefined) : Vector3[] {
     let goldenRatio = 1 + math.sqrt(5) / 4
     let angleIncrement = math.pi * 2 * goldenRatio
     let multiplier = 10
@@ -14,7 +14,7 @@ export function sphere(count : number) : Vector3[] {
         let y = math.sin(incline) * math.sin(azimuth) * multiplier
         let z = math.cos(incline) * multiplier
 
-        let point = new Vector3(x, y, z)
+        let point = offset ? new Vector3(x, y, z).add(offset) : new Vector3(x, y, z)
         points.push(point)
     }
     return points

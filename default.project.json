@@ -18,7 +18,7 @@
 				"$path": "include",
 				"node_modules": {
 					"$path": "node_modules/@rbxts"
-				}
+				}	
 			},
 			"TS": {
 				"$path": "out/shared"

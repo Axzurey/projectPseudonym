@@ -1,12 +1,14 @@
 import {Workspace, ReplicatedStorage, ServerScriptService, ServerStorage, RunService, Players} from '@rbxts/services'
 import {remoteService} from 'shared/services'
-import {entities, linter, channel} from 'server/runtime'
+import {entities, linter, channel, effects} from 'server/runtime'
 import { console } from 'shared/quark'
 import { clientEntity } from './game/client'
 
 remoteService.load()
 
 let clientData : {[key : string] : any} = {}
+
+effects.createFireFlies(100)
 
 remoteService.listenAsync('@client.requestLoadout', (client : Player) => {
     console.log("data requested for: ", client.Name)

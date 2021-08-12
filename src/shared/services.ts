@@ -1,4 +1,11 @@
 import { ReplicatedStorage, RunService } from "@rbxts/services"
+
+export namespace mathService {
+    export function refract(direction : Vector3, normal : Vector3) : Vector3 { // N MUST BE NORMALIZED
+        return direction.sub(normal.mul(direction.Dot(normal) * 2))
+    }
+}
+
 export namespace remoteService {
     let mainListener : RemoteEvent | undefined = undefined
     let sublistener : RemoteFunction | undefined = undefined
