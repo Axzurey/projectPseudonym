@@ -3,9 +3,210 @@ import { entity, debuff, debuffs } from "server/entities"
 import { console } from "shared/quark"
 import { mathService } from "shared/services"
 import { modifiers } from "./modifiers"
-import { sphere } from "shared/shapesf"
 import {} from 'server/game/database'
 import {recipes, charging, extraction} from 'server/game/recipes'
+
+export namespace regionC {
+
+    export interface regionParams {
+        onTerminate : () => void
+        onNoDetection : () => void
+        onDetection : (parts : BasePart[]) => void
+        coalesce? : boolean
+        filter? : 'w' | 'b'
+        filterlist? : BasePart[]
+        max? : number
+        terminateAfterDetections? : number
+    }
+
+    let regions : region[] = []
+
+    let updateLoop = RunService.Heartbeat.Connect((deltaTime) => {
+        regions.forEach((reg) => {
+            coroutine.wrap(() => {
+                let r = reg.params.filter && reg.params.filter === 'w' ? 
+                    Workspace.FindPartsInRegion3WithWhiteList(reg.region, reg.params.filterlist || [], reg.params.max || 100) :
+                        Workspace.FindPartsInRegion3WithIgnoreList(reg.region, reg.params.filterlist || [], reg.params.max || 100)
+                if (reg.params.terminateAfterDetections && reg.params.terminateAfterDetections >= reg.detections) {
+                    reg.terminate()
+                }
+                if (r.size() > 0) {
+                    reg.detections += 1
+                    reg.params.onDetection(r)
+                }
+                else {
+                    reg.params.onNoDetection()
+                }
+            })()
+        })
+    })
+
+    export class region {
+        region : Region3
+        params : regionParams
+        detections : number = 0
+        active : boolean
+        constructor(region : Region3, params : regionParams) {
+            this.region = region
+            this.params = params
+            this.active = true
+            if (params.coalesce) {
+                regions.push(this)
+            }
+            else {
+                let y = RunService.Heartbeat.Connect((deltaTime) => {
+                    if (this.active) {y.Disconnect(); return}
+                    let reg = this
+                    let r = reg.params.filter && reg.params.filter === 'w' ? 
+                    Workspace.FindPartsInRegion3WithWhiteList(reg.region, reg.params.filterlist || [], reg.params.max || 100) :
+                        Workspace.FindPartsInRegion3WithIgnoreList(reg.region, reg.params.filterlist || [], reg.params.max || 100)
+                    if (reg.params.terminateAfterDetections && reg.params.terminateAfterDetections >= reg.detections) {
+                        reg.terminate()
+                    }
+                    if (r.size() > 0) {
+                        reg.detections += 1
+                        reg.params.onDetection(r)
+                    }
+                    else {
+                        reg.params.onNoDetection()
+                    }
+                })
+            }
+        }
+        terminate() {
+            this.active = false
+            regions.forEach((v, i) => {
+                if (v === this) {
+                    regions.remove(i)
+                }
+            })
+            this.params.onTerminate()
+        }
+        static fromPart(part : BasePart, params : regionParams) : region {
+            return new this(spacial.partToRegion3(part), params)
+        }
+        static fromVectors(size : Vector3, cframe : CFrame, params : regionParams) : region {
+            return new this(spacial.cframeToRegion3(cframe, size), params)
+        }
+    }
+}
+
+export namespace spacial {
+    export function cframeToRegion3(cframe : CFrame, size : Vector3) : Region3 {
+        let abs = math.abs
+
+        let sx = size.X
+        let sy = size.Y
+        let sz = size.Z
+
+        let components = cframe.GetComponents()
+        let x = components[0]
+        let y = components[1]
+        let z = components[2]
+
+        let r00 = components[3]
+        let r01 = components[4]
+        let r02 = components[5]
+
+        let r10 = components[6]
+        let r11 = components[7]
+        let r12 = components[8]
+
+        let r20 = components[9]
+        let r21 = components[10]
+        let r22 = components[11]
+        //let x, y, z, R00, R01, R02, R10, R11, R12, R20, R21, R22 = cframe.GetComponents()
+    
+        let wsx = 0.5 * (abs(r00) * sx + abs(r01) * sy + abs(r02) * sz)
+	    let wsy = 0.5 * (abs(r10) * sx + abs(r11) * sy + abs(r12) * sz)
+	    let wsz = 0.5 * (abs(r20) * sx + abs(r21) * sy + abs(r22) * sz)
+
+        let minx = x - wsx
+        let miny = y - wsy
+        let minz = z - wsz
+
+        let maxx = x + wsx
+        let maxy = y + wsy
+        let maxz = z + wsz
+
+        let minv = new Vector3(minx, miny, minz)
+        let maxv = new Vector3(maxx, maxy, maxz)
+	    return new Region3(minv, maxv)
+    }
+
+    export function partToRegion3(part : BasePart) : Region3 {
+        let abs = math.abs
+
+        let size = part.Size
+        let cframe = part.CFrame
+
+        let sx = size.X
+        let sy = size.Y
+        let sz = size.Z
+
+        let components = cframe.GetComponents()
+        let x = components[0]
+        let y = components[1]
+        let z = components[2]
+
+        let r00 = components[3]
+        let r01 = components[4]
+        let r02 = components[5]
+
+        let r10 = components[6]
+        let r11 = components[7]
+        let r12 = components[8]
+
+        let r20 = components[9]
+        let r21 = components[10]
+        let r22 = components[11]
+        //let x, y, z, R00, R01, R02, R10, R11, R12, R20, R21, R22 = cframe.GetComponents()
+    
+        let wsx = 0.5 * (abs(r00) * sx + abs(r01) * sy + abs(r02) * sz)
+	    let wsy = 0.5 * (abs(r10) * sx + abs(r11) * sy + abs(r12) * sz)
+	    let wsz = 0.5 * (abs(r20) * sx + abs(r21) * sy + abs(r22) * sz)
+
+        let minx = x - wsx
+        let miny = y - wsy
+        let minz = z - wsz
+
+        let maxx = x + wsx
+        let maxy = y + wsy
+        let maxz = z + wsz
+
+        let minv = new Vector3(minx, miny, minz)
+        let maxv = new Vector3(maxx, maxy, maxz)
+	    return new Region3(minv, maxv)
+    }
+}
+
+export namespace database {
+    //let dsOptions = new Instance("DataStoreOptions")
+    //dsOptions.SetExperimentalFeatures({['v2'] : true})
+    let baseDs = DataStoreService.GetDataStore(`data::0.0.1::prerelease`) //dsOptions(when api fixed)
+    export function setAsync(key : string | number, value : any) : Promise<boolean> {
+        return new Promise((resolve, reject) => {
+            try {
+                baseDs.SetAsync(tostring(key), value)
+                resolve(true)
+            }
+            catch (e) {
+                reject(e)
+            }
+        })
+    }
+    export function getAsync(key : string) : Promise<any> {
+        return new Promise((resolve, reject) => {
+            try {
+                let n = baseDs.GetAsync(tostring(key))
+                resolve(n)
+            }
+            catch (e) {
+                reject(e)
+            }
+        })
+    }
+}
 
 export namespace requests {
     interface requestParams {
@@ -26,7 +227,7 @@ export namespace requests {
                         Url : this.params.url,
                         Method : this.params.method,
                         Headers : this.params.headers,
-                        Body : this.params.body
+                        Body : HttpService.JSONEncode(this.params.body)
                     })
                     resolve(n)
                 } catch(e) {
@@ -34,11 +235,11 @@ export namespace requests {
                 }
             })
         }
-        set(type : 'method' | 'url' | 'headers' | 'body', value : any) {
-            this.params[type] = value
+        set(t : 'method' | 'url' | 'headers' | 'body', value : any) {
+            this.params[t] = value
         }
-        get(type : 'method' | 'url' | 'headers' | 'body') {
-            return this.params[type]
+        get(t : 'method' | 'url' | 'headers' | 'body') {
+            return this.params[t]
         }
     }
 }
@@ -59,7 +260,7 @@ export namespace cache {
     let needyOverflow : number = 20 //#Recommended; if this is a non zero number, when additional instances are required it will create (x) extra instances
     let newBin = function() : Instance {
         let n = new Instance("Folder")
-        n.Name = "#cachbin"
+        n.Name = "#cachebin"
         n.Parent = Workspace
         return n
     }
@@ -149,6 +350,45 @@ export namespace projectile {
         onImpact : (raycastresult : RaycastResult, cframe : CFrame) => void
     }
 
+    interface orbitSimConfig {
+        velocity : number //# sensitive(in studs / second)
+        radius : number // self explanitory
+        ellipseMod : number //0 = circular
+        rotation : CFrame // an angular value
+        onUpdate : (cframe : CFrame) => void
+        onTerminate : () => void
+    }
+
+    export class orbitSimulation {
+        cframe : CFrame
+        orbital : Vector3
+        config : orbitSimConfig
+        active : boolean
+        orbits : number = 0
+        constructor(orbital : Vector3, config : orbitSimConfig) {
+            this.active = true
+            this.orbital = orbital
+            this.cframe = new CFrame()
+            this.config = config
+            let oRot = 0
+            let r = RunService.Heartbeat.Connect((deltaTime) => {
+                if (!this.active) {r.Disconnect(); return}
+                let orbitTime = (math.sqrt(config.radius) / config.velocity) / math.pi
+                let rotationalSpeed = math.pi * 2 / orbitTime
+                let ellipse = config.ellipseMod * config.radius
+                oRot = oRot + deltaTime * rotationalSpeed
+                this.cframe = (new CFrame(
+                    math.sin(oRot) * ellipse, 0, math.cos(oRot) * config.radius).mul(config.rotation))
+                    .add(this.orbital)
+                this.config.onUpdate(this.cframe)
+            })
+        }
+        terminate() {
+            this.active = false
+            this.config.onTerminate()
+        }
+    }
+
     export class scaleCollisionSimulation {
         cframe : CFrame
         config : scaleCollConfig
@@ -222,10 +462,6 @@ export namespace projectile {
             this.config.onTerminate()
         }
     }
-}
-
-export namespace database {
-
 }
 
 export namespace effects {
