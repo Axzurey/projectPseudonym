@@ -1,4 +1,4 @@
-import { console } from "./quark"
+import { console } from "./pkg/quark"
 
 export namespace skills {
     export function requirementParser(requirements : string[]) {

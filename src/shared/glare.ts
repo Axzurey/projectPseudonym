@@ -1,6 +1,6 @@
 import { RunService, Workspace } from "@rbxts/services"
 import { t } from "@rbxts/t"
-import { console } from "./quark"
+import { console } from "./pkg/quark"
 
 export interface particleParameters {
     particles : BasePart[] | number

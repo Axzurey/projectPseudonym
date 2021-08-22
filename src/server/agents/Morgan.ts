@@ -1,18 +1,18 @@
-export class Morgan {
+export default class Morgan {
     skills = {
         skill1 : {
-            name : "Frivolous Summer Sky",
+            name : "five saints",
             cooldown : 120,
-            description : "Deal damage to nearby enemies and inflict Charm effect on nearby [Male] enemies",
+            description : "Apply Regeneration + apply Max Health Up to all allies and inflict Charm to nearby [Male] enemies",
             icon : "",
         },
         skill2 : {
-            name : "Subliminal Sunbeam",
+            name : "subliminal sunbeam",
             cooldown : 60,
             icon : ""
         },
         skill3 : {
-            name : "Fate-Bound Eclipse",
+            name : "frivolous summer sky",
             cooldown : 60,
             icon : ""
         }

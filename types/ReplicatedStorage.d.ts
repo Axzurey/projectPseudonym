@@ -1,7 +1,34 @@
 interface ReplicatedStorage extends Instance {
 	assets: Folder & {
-		greenBall: MeshPart;
+		_svnsts: Folder & {
+			katsu: Model & {
+				mid: MeshPart;
+				center: MeshPart;
+				outer: MeshPart;
+			};
+			yumi: Model & {
+				mid: MeshPart;
+				center: MeshPart;
+				outer: MeshPart;
+			};
+			saya: Model & {
+				mid: MeshPart;
+				center: MeshPart;
+				outer: MeshPart;
+			};
+			akemi: Model & {
+				mid: MeshPart;
+				center: MeshPart;
+				outer: MeshPart;
+			};
+			mushi: Model & {
+				mid: MeshPart;
+				center: MeshPart;
+				outer: MeshPart;
+			};
+		};
 		wireframecube: MeshPart;
+		greenBall: MeshPart;
 	};
 	remotes: Folder & {
 		post: RemoteEvent;
@@ -46,6 +73,7 @@ interface ReplicatedStorage extends Instance {
 	TS: Folder & {
 		quark: ModuleScript;
 		fremy: ModuleScript;
+		glare: ModuleScript;
 		services: ModuleScript;
 		itemModules: Folder & {
 			Raiden: ModuleScript;
@@ -61,7 +89,9 @@ interface ReplicatedStorage extends Instance {
 			rawItemData: ModuleScript;
 			items: ModuleScript;
 		};
-		glare: ModuleScript;
+		pkg: Folder & {
+			textures: ModuleScript;
+		};
 		skills: ModuleScript;
 	};
 	rbxts_include: Folder & {

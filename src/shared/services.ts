@@ -69,7 +69,7 @@ export namespace remoteService {
             resolve(_data)
         })
     }
-    export function listenAsync(event : string, callback : (...data : any[]) => void | any[]) {
+    export function listenAsync(event : string, callback : (...data : any[]) => any) {
         if (events.indexOf(event) !== -1) throw 'event already exists and is being listened for'
         let caller = {
             callback : callback,

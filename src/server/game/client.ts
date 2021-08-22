@@ -1,11 +1,12 @@
 import { entity } from "server/entities"
 import { channel } from "server/runtime"
-import { baseMelee } from "./items"
+import { baseMelee, baseGun, meleeConstructor, gunConstructor } from "./items"
+import {items} from './itemJoint'
 
 
 export class clientEntity extends entity {
     client : Player
-    equippedItem : baseMelee | undefined
+    equippedItem : baseMelee | baseGun | undefined
     constructor(client : Player) {
         super()
         this.client = client
@@ -28,25 +29,22 @@ export class clientEntity extends entity {
             this.equippedItem.destroy()
         }
     }
-    useItem() {
+    useItem(...args: unknown[]) {
         if (this.equippedItem) {
-            this.equippedItem.attack()
+            this.equippedItem.activate(args)
         }
     }
     async equipItem(slot : string) {
         this.unequipItem()
 
-        let data = await channel.requestAsync('getDataForUsername', this.client.Name) as {inventory : [], hotbar : {[key : string] : {
-            index : number
-        }}}
+        let data = await channel.requestAsync('getDataForUsername', this.client.Name) as {inventory : [], hotbar : {[key : string] : any}}
         let hotbar = data.hotbar
         let inventory = data.inventory
-        let index = hotbar[slot].index
-        let item = inventory[index]
+        let item = hotbar[slot] as {name: string}
 
-        let object = await import('server/itemModules/Raiden')
+        let object = items[item.name as keyof typeof items]
 
-        let _module = new object.main(this.client, item)
+        let _module = new object(this.client, item as unknown as meleeConstructor & gunConstructor)
         this.equippedItem = _module
     }
 }

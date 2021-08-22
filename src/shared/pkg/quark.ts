@@ -1,3 +1,31 @@
+export namespace stringf {
+    export function camelCase(str: string): string {
+        let c = string.split(str, ' ')
+        let out : string[] = []
+        c.forEach((s, i) => {
+            if (i === 0) {
+                let ch = s.sub(1, 1)
+                let r = s.sub(2)
+                out.push(ch.upper() + r)
+            }
+            else {
+                out.push(s)
+            }
+        })
+        return out.join(' ')
+    }
+    export function pascalCase(str: string): string {
+        let c = string.split(str, ' ')
+        let out : string[] = []
+        c.forEach((s, i) => {
+            let ch = s.sub(1, 1)
+            let r = s.sub(2)
+            out.push(ch.upper() + r)
+        })
+        return out.join(' ')
+    }
+}
+
 export namespace console {
 
     type cb = {
@@ -26,14 +54,22 @@ export namespace console {
         })
     }
     export function raise(...parameters : any[]) {
-        let tp : string[] = []
+        let tp : any[] = []
         parameters.forEach((value, index) => {
-            let text : unknown = value
             if (type(value) === "string" || type(value) === "number" || type(value) === "boolean") {
                 tp.push(value)
             }
+            else if (type(value) === "nil") {
+                tp.push('nil')
+            }
+            else if (typeOf(value) === "Instance") {
+                tp.push((value as Instance).Name as string)
+            }
+            else if (typeOf(value) === "function") {
+                tp.push(tostring(value))
+            }
             else {
-                
+                tp.push(value)
             }
         })
         let embed = false
@@ -51,16 +87,23 @@ export namespace console {
         error(tp.join(' '))
     }
     export function log(...parameters : any[]) {
-        let tp : string[] = []
+        let tp : any[] = []
         parameters.forEach((value, index) => {
-            let text : unknown = value
             if (type(value) === "string" || type(value) === "number" || type(value) === "boolean") {
                 tp.push(value)
             }
-            else {
-                
+            else if (type(value) === "nil") {
+                tp.push('nil')
             }
-            
+            else if (typeOf(value) === "Instance") {
+                tp.push((value as Instance).Name as string)
+            }
+            else if (typeOf(value) === "function") {
+                tp.push(tostring(value))
+            }
+            else {
+                tp.push(value)
+            }
         })
         print(tp.join(' '))
         let embed = false

@@ -23,6 +23,9 @@
     "typescript": "^4.3.5"
   },
   "dependencies": {
+    "@rbxts/abbreviate": "^3.0.3",
+    "@rbxts/rotatedregion3": "^1.2.0",
+    "@rbxts/scale-model": "^1.0.14",
     "@rbxts/services": "^1.1.5",
     "@rbxts/t": "^2.1.4"
   }

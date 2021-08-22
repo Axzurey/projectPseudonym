@@ -1,10 +1,125 @@
 import { Players, MessagingService, DataStoreService, Workspace, TweenService, RunService, HttpService } from "@rbxts/services"
-import { entity, debuff, debuffs } from "server/entities"
-import { console } from "shared/quark"
+import { entity, debuff, debuffs, buffs } from "server/entities"
+import { console } from "shared/pkg/quark"
 import { mathService } from "shared/services"
 import { modifiers } from "./modifiers"
 import {} from 'server/game/database'
 import {recipes, charging, extraction} from 'server/game/recipes'
+
+export namespace touch {
+    export interface worldIconConfig {
+        cframe : CFrame
+        texture : string
+        properties? : {
+            Color? : ColorSequence
+            LightEmission? : number
+            LightInfluence? : number
+            Orientation? : Enum.ParticleOrientation
+            Size? : NumberRange
+            Transparency? : NumberRange
+            ZOffset? : number
+            EmissionDirection? : Enum.NormalId
+            Rotation? : Number
+            RotSpeed? : Number
+        }
+    }
+    export class staticWorldIcon {
+        private config : worldIconConfig
+        active : boolean = false
+        object : BasePart
+        toUpdate : boolean = false
+        constructor(config : worldIconConfig) {
+            this.config = config
+            this.active = true
+            this.object = new Instance("Part")
+            this.object.Size = new Vector3(0, 0, 0)
+            this.object.Position = new Vector3(0, -10000, 0)
+            this.object.Anchored = true
+            this.object.CanCollide = false
+            this.object.CanTouch = false
+            this.object.Parent = Workspace
+            let n = new Instance("Attachment")
+            n.Parent = this.object
+            let y : ParticleEmitter = new Instance("ParticleEmitter")
+            y.Drag = math.huge
+            y.Lifetime = new NumberRange(math.huge, math.huge)
+            y.Rate = 0
+            y.ZOffset = 0
+            y.Parent = n
+            this.toUpdate = true
+            let l = RunService.Heartbeat.Connect(() => {
+                if (!this.active) {l.Disconnect(); return}
+                if (this.toUpdate) {
+                    if (this.config.properties) {
+                        for (const [index, value] of pairs(this.config.properties)) {
+                            let key = index as unknown as keyof WritableInstanceProperties<ParticleEmitter>
+                            if (key in y) {
+                                (y[key] as any) = value
+                            }
+                        }
+                    }
+                    y.Enabled = false
+                    y.Enabled = true
+                    y.Texture = this.config.texture
+                    y.Emit()
+                    this.toUpdate = false
+                }
+                n.WorldCFrame = this.config.cframe
+            })
+        }
+        update(properties : Map<keyof worldIconConfig, any>) {
+            properties.forEach((value, index) => {
+                this.config[index] = value
+            })
+        }
+
+        drop() {
+            this.active = false
+            if (this.object.Parent) {
+                this.object.Destroy()
+            }
+        }
+    }
+}
+
+export namespace focal {
+    class _focus {
+        object : Part
+        constructor(object : Part) {
+            this.object = object
+        }
+        index(index: keyof InstanceProperties<Part>) {
+            if (index in this.object) {
+                return this.object[index]
+            }
+        }
+    }
+    interface focusPseudoClass {
+        _me : _focus
+        toRegionSimulation? : (params : regionC.regionParams) => regionC.region
+        toCache? : () => void
+        asProjectile? : (config : projectile.projectileConfig) => void
+    }
+    export function focus(part: Part) {
+        
+        let t : focusPseudoClass = {
+            _me: new _focus(part)
+        }
+        t.toRegionSimulation = function(params : regionC.regionParams) : regionC.region {
+            return regionC.region.fromPart(t._me.object, params)
+        }
+        t.toCache = function() {
+            cache.cacheParts([t._me.object])
+        }
+        t.asProjectile = function(config : projectile.projectileConfig) {
+            let n : {[key : string] : any} = {}
+            n.projectileSimulation = new projectile.projectileSimulation(t._me.object.CFrame, config)
+        }
+        return setmetatable(t, {__index : (s: typeof t, index: unknown) => {
+            return s._me.index(index as keyof InstanceProperties<BasePart>)
+        }})
+    }
+}
 
 export namespace regionC {
 
@@ -115,7 +230,6 @@ export namespace spacial {
         let r20 = components[9]
         let r21 = components[10]
         let r22 = components[11]
-        //let x, y, z, R00, R01, R02, R10, R11, R12, R20, R21, R22 = cframe.GetComponents()
     
         let wsx = 0.5 * (abs(r00) * sx + abs(r01) * sy + abs(r02) * sz)
 	    let wsy = 0.5 * (abs(r10) * sx + abs(r11) * sy + abs(r12) * sz)
@@ -160,7 +274,6 @@ export namespace spacial {
         let r20 = components[9]
         let r21 = components[10]
         let r22 = components[11]
-        //let x, y, z, R00, R01, R02, R10, R11, R12, R20, R21, R22 = cframe.GetComponents()
     
         let wsx = 0.5 * (abs(r00) * sx + abs(r01) * sy + abs(r02) * sz)
 	    let wsy = 0.5 * (abs(r10) * sx + abs(r11) * sy + abs(r12) * sz)
@@ -177,6 +290,15 @@ export namespace spacial {
         let minv = new Vector3(minx, miny, minz)
         let maxv = new Vector3(maxx, maxy, maxz)
 	    return new Region3(minv, maxv)
+    }
+    export function quadBezier(t: number, p0: number, p1: number, p2: number): number {
+	    return (1 - t) ^ 2 * p0 + 2 * (1 - t) * t * p1 + t ^ 2 * p2
+    }
+    export function vector3QuadBezier(t: number, v0: Vector3, v1: Vector3, v2: Vector3): Vector3 {
+        let x = quadBezier(t, v0.X, v1.X, v2.X)
+        let y = quadBezier(t, v0.Y, v1.Y, v2.Y)
+        let z = quadBezier(t, v0.Z, v1.Z, v2.Z)
+        return new Vector3(x, y, z)
     }
 }
 
@@ -329,7 +451,7 @@ export namespace cache {
 
 export namespace projectile {
     
-    interface projectileConfig {
+    export interface projectileConfig {
         reflect? : boolean
         terminateAfter? : number
         velocity : number
@@ -341,7 +463,7 @@ export namespace projectile {
         onUpdate : (cframe : CFrame) => void
     }
 
-    interface scaleCollConfig {
+    export interface scaleCollConfig {
         velocity : number
         terminateAfter : number
         params? : RaycastParams
@@ -350,7 +472,7 @@ export namespace projectile {
         onImpact : (raycastresult : RaycastResult, cframe : CFrame) => void
     }
 
-    interface orbitSimConfig {
+    export interface orbitSimConfig {
         velocity : number //# sensitive(in studs / second)
         radius : number // self explanitory
         ellipseMod : number //0 = circular
@@ -790,6 +912,11 @@ export namespace linter {
         let level : number = (tonumber(parse.match(_level)[0]) as number) || 0
         let id : any = parse.match(_id)[0]
         for (let [index] of pairs(debuffs)) {
+            if (parse.find(tostring(index))[0]) {
+                effect = tostring(index)
+            }
+        }
+        for (let [index] of pairs(buffs)) {
             if (parse.find(tostring(index))[0]) {
                 effect = tostring(index)
             }

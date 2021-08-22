@@ -1,5 +1,5 @@
 import { ReplicatedFirst, ReplicatedStorage, RunService, UserInputService, Workspace } from '@rbxts/services'
-import {gamef} from 'shared/quark'
+import {gamef} from 'shared/pkg/quark'
 import { entities } from 'server/runtime'
 //import { dropItem } from 'server/gameFunctions'
 

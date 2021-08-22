@@ -1,5 +1,5 @@
 import { Players, ReplicatedFirst, ReplicatedStorage, RunService, UserInputService, Workspace } from '@rbxts/services'
-import {console, gamef} from 'shared/quark'
+import {console, gamef} from 'shared/pkg/quark'
 //import { dropItem } from 'server/gameFunctions'
 import { entities } from 'server/runtime'
 
@@ -12,8 +12,84 @@ export type meleeConstructor = {
     }}[]
 }
 
+export type gunConstructor = {
+    damage: number
+    firerate: number
+    modifiers : {[key : string] : {
+        level : number,
+        name : string
+    }}[]
+}
+
 export const items : {[key : string] : baseMelee} = {
     
+}
+
+export class baseGun {
+    client : Player
+    name : string | undefined
+    damage : number
+    attacking : boolean = false
+    equipped : boolean
+    events : {[key : string] : RBXScriptConnection} = {}
+    firerate : number
+    attackAnimation : AnimationTrack | undefined
+    modifiers : {[key : string] : {
+        level : number,
+        name : string
+    }}[]
+    object : Model | undefined
+    motor : Motor6D | undefined
+    activate(...args: unknown[]) {
+        
+    }
+    constructor(client : Player, objectData : gunConstructor) {
+        this.damage = objectData.damage
+        this.firerate = objectData.firerate
+        this.modifiers = objectData.modifiers
+        this.client = client
+        this.equipped = false
+    }
+    destroy() {
+        this.unequip()
+        this.object?.Destroy()
+    }
+    equip() {
+        this.equipped = true
+        this.loadMotors()
+        this.loadEvents()
+    }
+    unequip() {
+        this.equipped = false
+        if (this.motor) {
+            this.motor.Destroy()
+        }
+        for (let [index, value] of pairs(this.events)) {
+            value.Disconnect()
+        }
+    }
+    loadEvents() {
+        this.events.stepped = RunService.Stepped.Connect((deltaTime) => {
+
+        })
+    }
+    loadMotors() {
+        this.motor = new Instance("Motor6D")
+        this.motor.Name = "weapon"
+        this.motor.Part0 = this.client.Character?.FindFirstChild("Torso") as BasePart
+        this.motor.Part1 = this.object?.FindFirstChild("handle") as BasePart
+        this.motor.Parent = this.client.Character?.FindFirstChild("Torso") as BasePart
+        console.log("gun motors loaded 😀")
+    }
+    finishLoad() {
+        let character = this.client.Character
+        let humanoid = character?.FindFirstChild("Humanoid") as Humanoid
+        if (humanoid) {
+            let anim = ReplicatedStorage.FindFirstChild("animations")?.FindFirstChild(this.name as string)
+            ?.FindFirstChild("fire") as Animation
+            this.attackAnimation = (humanoid.FindFirstChild("Animator") as Animator).LoadAnimation(anim)
+        }
+    }
 }
 
 export class baseMelee {
@@ -31,7 +107,7 @@ export class baseMelee {
     }}[]
     object : Model | undefined
     motor : Motor6D | undefined
-    attack() {
+    activate(...args: unknown[]) {
         if (this.object && this.attackAnimation) {
             this.attackAnimation.Play()
             let blade = this.object.FindFirstChild("hitbox") as BasePart
@@ -89,10 +165,6 @@ export class baseMelee {
         this.events.stepped = RunService.Stepped.Connect((deltaTime) => {
 
         })
-        let vui = ReplicatedStorage.FindFirstChild("remotes")?.FindFirstChild("validUserInput") as RemoteEvent
-        //this.events.userInput = observer.watch("validUserInput", (client : Player, direction : 1 | 0, key : Enum.UserInputType  | Enum.KeyCode) => {
-          //  if (this.client !== client) return
-        //})
     }
     loadMotors() {
         this.motor = new Instance("Motor6D")
